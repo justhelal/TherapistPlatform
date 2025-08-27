@@ -1,0 +1,99 @@
+using Microsoft.EntityFrameworkCore;
+using PatientApi.Domain.Entities;
+using PatientApi.Domain.Interfaces;
+using PatientApi.Infrastructure.Data;
+
+namespace PatientApi.Infrastructure.Repositories;
+
+public class AppointmentRepository : IAppointmentRepository
+{
+    private readonly PatientDbContext _context;
+
+    public AppointmentRepository(PatientDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<Appointment?> GetByIdAsync(Guid id)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAllAsync()
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => !a.IsDeleted)
+            .ToListAsync();
+    }
+
+    public async Task<Appointment> AddAsync(Appointment entity)
+    {
+        _context.Appointments.Add(entity);
+        await _context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task<Appointment> UpdateAsync(Appointment entity)
+    {
+        entity.UpdatedAt = DateTime.UtcNow;
+        _context.Appointments.Update(entity);
+        await _context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        var appointment = await _context.Appointments.FindAsync(id);
+        if (appointment != null)
+        {
+            appointment.IsDeleted = true;
+            appointment.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<bool> ExistsAsync(Guid id)
+    {
+        return await _context.Appointments.AnyAsync(a => a.Id == id && !a.IsDeleted);
+    }
+
+    public async Task<IEnumerable<Appointment>> GetByPatientIdAsync(Guid patientId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => a.PatientId == patientId && !a.IsDeleted)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetByTherapistIdAsync(Guid therapistId)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => a.TherapistId == therapistId && !a.IsDeleted)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate && !a.IsDeleted)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync()
+    {
+        var now = DateTime.UtcNow;
+        return await _context.Appointments
+            .Include(a => a.Patient)
+            .Where(a => a.AppointmentDate > now && !a.IsDeleted)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync();
+    }
+}

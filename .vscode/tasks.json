@@ -1,0 +1,31 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Therapist API",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"src/TherapistApi/TherapistApi.Presentation"
+			],
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Run Therapist API",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"run",
+				"--project",
+				"src/TherapistApi/TherapistApi.Presentation"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

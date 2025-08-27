@@ -1,0 +1,6 @@
+@TherapistApi.Presentation_HostAddress = http://localhost:5136
+
+GET {{TherapistApi.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
