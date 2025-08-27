@@ -4,16 +4,20 @@ using PatientApi.Domain.Entities;
 using PatientApi.Domain.Enums;
 using PatientApi.Domain.Interfaces;
 using Shared.Common;
+using MassTransit;
+using Shared.Events;
 
 namespace PatientApi.Application.Services;
 
 public class PatientService : IPatientService
 {
     private readonly IPatientRepository _patientRepository;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public PatientService(IPatientRepository patientRepository)
+    public PatientService(IPatientRepository patientRepository, IPublishEndpoint publishEndpoint)
     {
         _patientRepository = patientRepository;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<ApiResponse<IEnumerable<PatientDto>>> GetAllPatientsAsync()
@@ -59,6 +63,18 @@ public class PatientService : IPatientService
             patient.Status = PatientStatus.Active;
             
             var createdPatient = await _patientRepository.AddAsync(patient);
+
+            // Publish PatientCreatedEvent
+            await _publishEndpoint.Publish(new PatientCreatedEvent
+            {
+                PatientId = createdPatient.Id,
+                FirstName = createdPatient.FirstName,
+                LastName = createdPatient.LastName,
+                Email = createdPatient.Email,
+                DateOfBirth = createdPatient.DateOfBirth,
+                CreatedAt = createdPatient.CreatedAt
+            });
+
             return ApiResponse<PatientDto>.SuccessResult(MapToDto(createdPatient), "Patient created successfully");
         }
         catch (Exception ex)

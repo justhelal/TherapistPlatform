@@ -4,16 +4,20 @@ using TherapistApi.Domain.Entities;
 using TherapistApi.Domain.DTOs;
 using TherapistApi.Domain.Enums;
 using Shared.Common;
+using MassTransit;
+using Shared.Events;
 
 namespace TherapistApi.Application.Services;
 
 public class TherapistService : ITherapistService
 {
     private readonly ITherapistRepository _therapistRepository;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public TherapistService(ITherapistRepository therapistRepository)
+    public TherapistService(ITherapistRepository therapistRepository, IPublishEndpoint publishEndpoint)
     {
         _therapistRepository = therapistRepository;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<ApiResponse<IEnumerable<TherapistDto>>> GetAllTherapistsAsync()
@@ -64,6 +68,18 @@ public class TherapistService : ITherapistService
             therapist.Status = TherapistStatus.Active;
             
             var createdTherapist = await _therapistRepository.AddAsync(therapist);
+
+            // Publish TherapistCreatedEvent
+            await _publishEndpoint.Publish(new TherapistCreatedEvent
+            {
+                TherapistId = createdTherapist.Id,
+                FirstName = createdTherapist.FirstName,
+                LastName = createdTherapist.LastName,
+                Email = createdTherapist.Email,
+                Specialization = createdTherapist.Specialization.ToString(),
+                CreatedAt = createdTherapist.CreatedAt
+            });
+
             return ApiResponse<TherapistDto>.SuccessResult(MapToDto(createdTherapist), "Therapist created successfully");
         }
         catch (Exception ex)
@@ -99,6 +115,18 @@ public class TherapistService : ITherapistService
             existingTherapist.UpdatedAt = DateTime.UtcNow;
 
             var updatedTherapist = await _therapistRepository.UpdateAsync(existingTherapist);
+
+            // Publish TherapistUpdatedEvent
+            await _publishEndpoint.Publish(new TherapistUpdatedEvent
+            {
+                TherapistId = updatedTherapist.Id,
+                FirstName = updatedTherapist.FirstName,
+                LastName = updatedTherapist.LastName,
+                Email = updatedTherapist.Email,
+                Specialization = updatedTherapist.Specialization.ToString(),
+                UpdatedAt = updatedTherapist.UpdatedAt ?? DateTime.UtcNow
+            });
+
             return ApiResponse<TherapistDto>.SuccessResult(MapToDto(updatedTherapist), "Therapist updated successfully");
         }
         catch (Exception ex)
