@@ -20,7 +20,12 @@ public class PatientRepository : IPatientRepository
         return await _context.Patients.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
     }
 
-    public async Task<IEnumerable<Patient>> GetAllAsync()
+    public async Task<List<Patient>> GetAllAsync()
+    {
+        return await _context.Patients.Where(p => !p.IsDeleted).ToListAsync();
+    }
+
+    async Task<IEnumerable<Patient>> IRepository<Patient>.GetAllAsync()
     {
         return await _context.Patients.Where(p => !p.IsDeleted).ToListAsync();
     }

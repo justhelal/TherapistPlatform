@@ -10,6 +10,16 @@ public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
 
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllPatients()
+    {
+        var result = await _patientService.GetAllPatientsAsync();
+        if (result.Success)
+            return Ok(result);
+        return BadRequest(result);
+    }
+
     public PatientsController(IPatientService patientService)
     {
         _patientService = patientService;

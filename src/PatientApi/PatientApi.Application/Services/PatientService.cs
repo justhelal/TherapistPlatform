@@ -69,6 +69,20 @@ public class PatientService : IPatientService
         }
     }
 
+        public async Task<ApiResponse<List<PatientDto>>> GetAllPatientsAsync()
+        {
+            try
+            {
+                var patients = await _patientRepository.GetAllAsync();
+                var patientList = patients.Select(MapToDto).ToList();
+                return ApiResponse<List<PatientDto>>.SuccessResult(patientList);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<List<PatientDto>>.ErrorResult($"Error retrieving patients: {ex.Message}");
+            }
+        }
+
     private static PatientDto MapToDto(Patient patient)
     {
         return new PatientDto

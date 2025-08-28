@@ -7,4 +7,5 @@ public interface IPatientService
 {
     Task<ApiResponse<PatientDto>> GetPatientByIdAsync(Guid id);
     Task<ApiResponse<PatientDto>> CreatePatientAsync(CreatePatientDto createPatientDto);
+    Task<ApiResponse<List<PatientDto>>> GetAllPatientsAsync();
 }
