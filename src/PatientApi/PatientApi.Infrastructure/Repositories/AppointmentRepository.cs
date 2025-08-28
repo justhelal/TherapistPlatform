@@ -14,26 +14,22 @@ public class AppointmentRepository : IAppointmentRepository
         _context = context;
     }
 
-    public async Task<Appointment?> GetByIdAsync(Guid id)
-    {
-        return await _context.Appointments
-            .Include(a => a.Patient)
-            .FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
-    }
-
-    public async Task<IEnumerable<Appointment>> GetAllAsync()
-    {
-        return await _context.Appointments
-            .Include(a => a.Patient)
-            .Where(a => !a.IsDeleted)
-            .ToListAsync();
-    }
-
     public async Task<Appointment> AddAsync(Appointment entity)
     {
         _context.Appointments.Add(entity);
         await _context.SaveChangesAsync();
         return entity;
+    }
+
+    // Keep minimal IRepository implementation for base functionality
+    public async Task<Appointment?> GetByIdAsync(Guid id)
+    {
+        return await _context.Appointments.FirstOrDefaultAsync(a => a.Id == id && !a.IsDeleted);
+    }
+
+    public async Task<IEnumerable<Appointment>> GetAllAsync()
+    {
+        return await _context.Appointments.Where(a => !a.IsDeleted).ToListAsync();
     }
 
     public async Task<Appointment> UpdateAsync(Appointment entity)
@@ -65,35 +61,7 @@ public class AppointmentRepository : IAppointmentRepository
         return await _context.Appointments
             .Include(a => a.Patient)
             .Where(a => a.PatientId == patientId && !a.IsDeleted)
-            .OrderBy(a => a.AppointmentDate)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Appointment>> GetByTherapistIdAsync(Guid therapistId)
-    {
-        return await _context.Appointments
-            .Include(a => a.Patient)
-            .Where(a => a.TherapistId == therapistId && !a.IsDeleted)
-            .OrderBy(a => a.AppointmentDate)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Appointment>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
-    {
-        return await _context.Appointments
-            .Include(a => a.Patient)
-            .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate && !a.IsDeleted)
-            .OrderBy(a => a.AppointmentDate)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Appointment>> GetUpcomingAppointmentsAsync()
-    {
-        var now = DateTime.UtcNow;
-        return await _context.Appointments
-            .Include(a => a.Patient)
-            .Where(a => a.AppointmentDate > now && !a.IsDeleted)
-            .OrderBy(a => a.AppointmentDate)
+            .OrderByDescending(a => a.AppointmentDate)
             .ToListAsync();
     }
 }

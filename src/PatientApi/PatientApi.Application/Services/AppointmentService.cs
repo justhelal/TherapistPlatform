@@ -12,13 +12,16 @@ namespace PatientApi.Application.Services;
 public class AppointmentService : IAppointmentService
 {
     private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IPatientRepository _patientRepository;
     private readonly IPublishEndpoint _publishEndpoint;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
+        IPatientRepository patientRepository,
         IPublishEndpoint publishEndpoint)
     {
         _appointmentRepository = appointmentRepository;
+        _patientRepository = patientRepository;
         _publishEndpoint = publishEndpoint;
     }
 
@@ -32,6 +35,11 @@ public class AppointmentService : IAppointmentService
             
             if (createAppointmentDto.TherapistId == Guid.Empty)
                 return ApiResponse<AppointmentDto>.ErrorResult("Invalid therapist ID");
+
+            // Verify patient exists and get patient details
+            var patient = await _patientRepository.GetByIdAsync(createAppointmentDto.PatientId);
+            if (patient == null)
+                return ApiResponse<AppointmentDto>.ErrorResult("Patient not found");
 
             // Create appointment entity
             var appointment = new Appointment
@@ -60,7 +68,7 @@ public class AppointmentService : IAppointmentService
                 DateTime = createdAppointment.AppointmentDate
             });
 
-            return ApiResponse<AppointmentDto>.SuccessResult(MapToDto(createdAppointment), "Appointment created successfully");
+            return ApiResponse<AppointmentDto>.SuccessResult(MapToDto(createdAppointment, patient), "Appointment created successfully");
         }
         catch (Exception ex)
         {
@@ -68,8 +76,29 @@ public class AppointmentService : IAppointmentService
         }
     }
 
+    public async Task<ApiResponse<IEnumerable<AppointmentDto>>> GetAppointmentsByPatientIdAsync(Guid patientId)
+    {
+        try
+        {
+            // Verify patient exists
+            var patient = await _patientRepository.GetByIdAsync(patientId);
+            if (patient == null)
+                return ApiResponse<IEnumerable<AppointmentDto>>.ErrorResult("Patient not found");
+
+            // Get appointments for the patient
+            var appointments = await _appointmentRepository.GetByPatientIdAsync(patientId);
+            var appointmentDtos = appointments.Select(a => MapToDto(a, patient));
+            
+            return ApiResponse<IEnumerable<AppointmentDto>>.SuccessResult(appointmentDtos);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<IEnumerable<AppointmentDto>>.ErrorResult($"Error retrieving appointments: {ex.Message}");
+        }
+    }
+
     // Keep only the mapping method for the simplified flow
-    private static AppointmentDto MapToDto(Appointment appointment)
+    private static AppointmentDto MapToDto(Appointment appointment, Patient? patient = null)
     {
         return new AppointmentDto
         {
@@ -80,7 +109,8 @@ public class AppointmentService : IAppointmentService
             Duration = appointment.Duration,
             Status = appointment.Status,
             Notes = appointment.Notes,
-            Cost = appointment.Cost
+            Cost = appointment.Cost,
+            PatientName = patient?.FullName ?? string.Empty
         };
     }
 }

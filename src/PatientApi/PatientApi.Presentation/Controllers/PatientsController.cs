@@ -15,15 +15,6 @@ public class PatientsController : ControllerBase
         _patientService = patientService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllPatients()
-    {
-        var result = await _patientService.GetAllPatientsAsync();
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPatientById(Guid id)
     {
@@ -43,44 +34,5 @@ public class PatientsController : ControllerBase
         if (result.Success)
             return CreatedAtAction(nameof(GetPatientById), new { id = result.Data?.Id }, result);
         return BadRequest(result);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePatient(Guid id, [FromBody] CreatePatientDto updatePatientDto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var result = await _patientService.UpdatePatientAsync(id, updatePatientDto);
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeletePatient(Guid id)
-    {
-        var result = await _patientService.DeletePatientAsync(id);
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpGet("active")]
-    public async Task<IActionResult> GetActivePatients()
-    {
-        var result = await _patientService.GetActivePatientsAsync();
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpGet("{id}/appointments")]
-    public async Task<IActionResult> GetPatientWithAppointments(Guid id)
-    {
-        var result = await _patientService.GetPatientWithAppointmentsAsync(id);
-        if (result.Success)
-            return Ok(result);
-        return NotFound(result);
     }
 }

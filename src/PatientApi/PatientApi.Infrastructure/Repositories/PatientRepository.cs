@@ -60,25 +60,4 @@ public class PatientRepository : IPatientRepository
     {
         return await _context.Patients.FirstOrDefaultAsync(p => p.Email == email && !p.IsDeleted);
     }
-
-    public async Task<IEnumerable<Patient>> GetActivePatientsAsync()
-    {
-        return await _context.Patients
-            .Where(p => !p.IsDeleted && p.Status == Domain.Enums.PatientStatus.Active)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Patient>> GetPatientsByStatusAsync(Domain.Enums.PatientStatus status)
-    {
-        return await _context.Patients
-            .Where(p => !p.IsDeleted && p.Status == status)
-            .ToListAsync();
-    }
-
-    public async Task<Patient?> GetPatientWithAppointmentsAsync(Guid patientId)
-    {
-        return await _context.Patients
-            .Include(p => p.Appointments)
-            .FirstOrDefaultAsync(p => p.Id == patientId && !p.IsDeleted);
-    }
 }

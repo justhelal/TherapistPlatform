@@ -26,4 +26,13 @@ public class AppointmentsController : ControllerBase
             return Ok(result);
         return BadRequest(result);
     }
+
+    [HttpGet("patient/{patientId}")]
+    public async Task<IActionResult> GetAppointmentsByPatientId(Guid patientId)
+    {
+        var result = await _appointmentService.GetAppointmentsByPatientIdAsync(patientId);
+        if (result.Success)
+            return Ok(result);
+        return BadRequest(result);
+    }
 }

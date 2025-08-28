@@ -20,20 +20,6 @@ public class PatientService : IPatientService
         _publishEndpoint = publishEndpoint;
     }
 
-    public async Task<ApiResponse<IEnumerable<PatientDto>>> GetAllPatientsAsync()
-    {
-        try
-        {
-            var patients = await _patientRepository.GetAllAsync();
-            var patientDtos = patients.Select(MapToDto);
-            return ApiResponse<IEnumerable<PatientDto>>.SuccessResult(patientDtos);
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<IEnumerable<PatientDto>>.ErrorResult($"Error retrieving patients: {ex.Message}");
-        }
-    }
-
     public async Task<ApiResponse<PatientDto>> GetPatientByIdAsync(Guid id)
     {
         try
@@ -80,90 +66,6 @@ public class PatientService : IPatientService
         catch (Exception ex)
         {
             return ApiResponse<PatientDto>.ErrorResult($"Error creating patient: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<PatientDto>> UpdatePatientAsync(Guid id, CreatePatientDto updatePatientDto)
-    {
-        try
-        {
-            var existingPatient = await _patientRepository.GetByIdAsync(id);
-            if (existingPatient == null)
-                return ApiResponse<PatientDto>.ErrorResult("Patient not found");
-
-            // Update properties
-            existingPatient.FirstName = updatePatientDto.FirstName;
-            existingPatient.LastName = updatePatientDto.LastName;
-            existingPatient.Email = updatePatientDto.Email;
-            existingPatient.PhoneNumber = updatePatientDto.PhoneNumber;
-            existingPatient.DateOfBirth = updatePatientDto.DateOfBirth;
-            existingPatient.Gender = updatePatientDto.Gender;
-            existingPatient.Address = updatePatientDto.Address;
-            existingPatient.City = updatePatientDto.City;
-            existingPatient.State = updatePatientDto.State;
-            existingPatient.ZipCode = updatePatientDto.ZipCode;
-            existingPatient.Country = updatePatientDto.Country;
-            existingPatient.EmergencyContactName = updatePatientDto.EmergencyContactName;
-            existingPatient.EmergencyContactPhone = updatePatientDto.EmergencyContactPhone;
-            existingPatient.InsuranceProvider = updatePatientDto.InsuranceProvider;
-            existingPatient.InsurancePolicyNumber = updatePatientDto.InsurancePolicyNumber;
-            existingPatient.MedicalHistory = updatePatientDto.MedicalHistory;
-            existingPatient.CurrentMedications = updatePatientDto.CurrentMedications;
-            existingPatient.Allergies = updatePatientDto.Allergies;
-
-            var updatedPatient = await _patientRepository.UpdateAsync(existingPatient);
-            return ApiResponse<PatientDto>.SuccessResult(MapToDto(updatedPatient), "Patient updated successfully");
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<PatientDto>.ErrorResult($"Error updating patient: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<bool>> DeletePatientAsync(Guid id)
-    {
-        try
-        {
-            var exists = await _patientRepository.ExistsAsync(id);
-            if (!exists)
-                return ApiResponse<bool>.ErrorResult("Patient not found");
-
-            await _patientRepository.DeleteAsync(id);
-            return ApiResponse<bool>.SuccessResult(true, "Patient deleted successfully");
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<bool>.ErrorResult($"Error deleting patient: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<IEnumerable<PatientDto>>> GetActivePatientsAsync()
-    {
-        try
-        {
-            var patients = await _patientRepository.GetActivePatientsAsync();
-            var patientDtos = patients.Select(MapToDto);
-            return ApiResponse<IEnumerable<PatientDto>>.SuccessResult(patientDtos);
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<IEnumerable<PatientDto>>.ErrorResult($"Error retrieving active patients: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<PatientDto>> GetPatientWithAppointmentsAsync(Guid id)
-    {
-        try
-        {
-            var patient = await _patientRepository.GetPatientWithAppointmentsAsync(id);
-            if (patient == null)
-                return ApiResponse<PatientDto>.ErrorResult("Patient not found");
-
-            return ApiResponse<PatientDto>.SuccessResult(MapToDto(patient));
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<PatientDto>.ErrorResult($"Error retrieving patient with appointments: {ex.Message}");
         }
     }
 

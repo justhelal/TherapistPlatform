@@ -40,9 +40,11 @@ builder.Services.AddMassTransit(x =>
 
 // Add repositories
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 
 // Add services
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IPatientService, PatientService>();
 
 // Add CORS
 builder.Services.AddCors(options =>
