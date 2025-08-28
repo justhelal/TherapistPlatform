@@ -44,43 +44,4 @@ public class TherapistsController : ControllerBase
             return CreatedAtAction(nameof(GetTherapistById), new { id = result.Data?.Id }, result);
         return BadRequest(result);
     }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTherapist(Guid id, [FromBody] CreateTherapistDto updateTherapistDto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        var result = await _therapistService.UpdateTherapistAsync(id, updateTherapistDto);
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteTherapist(Guid id)
-    {
-        var result = await _therapistService.DeleteTherapistAsync(id);
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpGet("specialization/{specialization}")]
-    public async Task<IActionResult> GetTherapistsBySpecialization(int specialization)
-    {
-        var result = await _therapistService.GetTherapistsBySpecializationAsync(specialization);
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
-
-    [HttpGet("active")]
-    public async Task<IActionResult> GetActiveTherapists()
-    {
-        var result = await _therapistService.GetActiveTherapistsAsync();
-        if (result.Success)
-            return Ok(result);
-        return BadRequest(result);
-    }
 }

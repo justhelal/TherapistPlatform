@@ -61,9 +61,9 @@ public class TherapistScheduleRepository : ITherapistScheduleRepository
             .ToListAsync();
     }
 
-    public async Task<bool> IsTimeSlotAvailableAsync(Guid therapistId, DateTime dateTime)
+    public async Task<bool> IsTimeSlotBlockedAsync(Guid therapistId, DateTime dateTime)
     {
-        return !await _context.TherapistSchedules
+        return await _context.TherapistSchedules
             .AnyAsync(s => s.TherapistId == therapistId && 
                           s.AppointmentDateTime == dateTime && 
                           s.IsBlocked);

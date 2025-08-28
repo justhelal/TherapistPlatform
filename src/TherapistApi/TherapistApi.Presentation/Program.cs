@@ -46,6 +46,7 @@ builder.Services.AddScoped<ITherapistScheduleRepository, TherapistScheduleReposi
 
 // Add services
 builder.Services.AddScoped<ITherapistService, TherapistService>();
+builder.Services.AddScoped<ITherapistScheduleService, TherapistScheduleService>();
 
 // Add CORS
 builder.Services.AddCors(options =>

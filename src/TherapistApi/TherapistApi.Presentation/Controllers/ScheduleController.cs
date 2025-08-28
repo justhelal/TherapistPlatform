@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using TherapistApi.Domain.Interfaces;
+using TherapistApi.Application.Interfaces;
 
 namespace TherapistApi.Presentation.Controllers;
 
@@ -7,24 +7,24 @@ namespace TherapistApi.Presentation.Controllers;
 [Route("api/[controller]")]
 public class ScheduleController : ControllerBase
 {
-    private readonly ITherapistScheduleRepository _scheduleRepository;
+    private readonly ITherapistScheduleService _scheduleService;
 
-    public ScheduleController(ITherapistScheduleRepository scheduleRepository)
+    public ScheduleController(ITherapistScheduleService scheduleService)
     {
-        _scheduleRepository = scheduleRepository;
+        _scheduleService = scheduleService;
     }
 
     [HttpGet("therapist/{therapistId}")]
     public async Task<IActionResult> GetTherapistSchedule(Guid therapistId)
     {
-        var schedule = await _scheduleRepository.GetByTherapistIdAsync(therapistId);
+        var schedule = await _scheduleService.GetTherapistScheduleAsync(therapistId);
         return Ok(schedule);
     }
 
-    [HttpGet("therapist/{therapistId}/availability")]
-    public async Task<IActionResult> CheckAvailability(Guid therapistId, [FromQuery] DateTime dateTime)
+    [HttpGet("therapist/{therapistId}/blocked")]
+    public async Task<IActionResult> IsTimeSlotBlocked(Guid therapistId, [FromQuery] DateTime dateTime)
     {
-        var isAvailable = await _scheduleRepository.IsTimeSlotAvailableAsync(therapistId, dateTime);
-        return Ok(new { IsAvailable = isAvailable, TherapistId = therapistId, DateTime = dateTime });
+        var isBlocked = await _scheduleService.IsTimeSlotBlockedAsync(therapistId, dateTime);
+        return Ok(new { IsBlocked = isBlocked, TherapistId = therapistId, DateTime = dateTime });
     }
 }

@@ -6,5 +6,5 @@ namespace TherapistApi.Domain.Interfaces;
 public interface ITherapistScheduleRepository : IRepository<TherapistSchedule>
 {
     Task<IEnumerable<TherapistSchedule>> GetByTherapistIdAsync(Guid therapistId);
-    Task<bool> IsTimeSlotAvailableAsync(Guid therapistId, DateTime dateTime);
+    Task<bool> IsTimeSlotBlockedAsync(Guid therapistId, DateTime dateTime);
 }

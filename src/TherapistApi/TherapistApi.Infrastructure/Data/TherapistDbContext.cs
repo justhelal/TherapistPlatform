@@ -12,7 +12,6 @@ public class TherapistDbContext : DbContext
     }
 
     public DbSet<Therapist> Therapists { get; set; }
-    public DbSet<Availability> Availabilities { get; set; }
     public DbSet<TherapistSchedule> TherapistSchedules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,16 +36,6 @@ public class TherapistDbContext : DbContext
             entity.Property(e => e.State).HasMaxLength(100);
             entity.Property(e => e.ZipCode).HasMaxLength(20);
             entity.Property(e => e.Country).HasMaxLength(100);
-        });
-
-        // Configure Availability entity
-        modelBuilder.Entity<Availability>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasOne(e => e.Therapist)
-                  .WithMany()
-                  .HasForeignKey(e => e.TherapistId)
-                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Configure TherapistSchedule entity
