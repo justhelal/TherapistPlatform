@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:4.1.3-management
     container_name: therapist-platform-rabbitmq
     ports:
       - "5672:5672"     # AMQP port
@@ -10,21 +10,3 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - therapist-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-volumes:
-  rabbitmq_data:
-    driver: local
-
-networks:
-  therapist-network:
-    driver: bridge
