@@ -21,7 +21,7 @@ builder.Services.AddDbContext<TherapistDbContext>(options =>
 // Add MassTransit with RabbitMQ - simplified configuration
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<AppointmentCreatedConsumer>();
+    x.AddConsumer<Consumers>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -34,7 +34,7 @@ builder.Services.AddMassTransit(x =>
         // Configure specific exchange and queue for appointments
         cfg.ReceiveEndpoint("therapist-appointments-queue", e =>
         {
-            e.ConfigureConsumer<AppointmentCreatedConsumer>(context);
+            e.ConfigureConsumer<Consumers>(context);
             e.Bind("appointments.exchange");
         });
     });

@@ -4,16 +4,16 @@ using Shared.Events;
 using TherapistApi.Domain.Interfaces;
 using TherapistApi.Domain.Entities;
 
-namespace TherapistApi.Application.Messaging;
+namespace TherapistApi.Infrastructure.Messaging;
 
 // Consumer that handles appointment creation events and updates therapist schedule
-public class AppointmentCreatedConsumer : IConsumer<AppointmentCreatedEvent>
+public class Consumers : IConsumer<AppointmentCreatedEvent>
 {
-    private readonly ILogger<AppointmentCreatedConsumer> _logger;
+    private readonly ILogger<Consumers> _logger;
     private readonly ITherapistScheduleRepository _scheduleRepository;
 
-    public AppointmentCreatedConsumer(
-        ILogger<AppointmentCreatedConsumer> logger,
+    public Consumers(
+        ILogger<Consumers> logger,
         ITherapistScheduleRepository scheduleRepository)
     {
         _logger = logger;
