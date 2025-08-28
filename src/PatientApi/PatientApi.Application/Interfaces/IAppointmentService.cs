@@ -10,8 +10,4 @@ namespace PatientApi.Application.Interfaces;
 public interface IAppointmentService
 {
     Task<ApiResponse<AppointmentDto>> CreateAppointmentAsync(CreateAppointmentDto createAppointmentDto);
-    Task<ApiResponse<AppointmentDto>> UpdateAppointmentAsync(Guid id, CreateAppointmentDto updateAppointmentDto);
-    Task<ApiResponse<bool>> CancelAppointmentAsync(Guid id, string cancellationReason);
-    Task<ApiResponse<IEnumerable<AppointmentDto>>> GetAppointmentsByPatientIdAsync(Guid patientId);
-    Task<ApiResponse<IEnumerable<AppointmentDto>>> GetUpcomingAppointmentsAsync();
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TherapistApi.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TherapistApi.Infrastructure.Data;
 namespace TherapistApi.Infrastructure.Migrations
 {
     [DbContext(typeof(TherapistDbContext))]
-    partial class TherapistDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250828202217_AddTherapistSchedule")]
+    partial class AddTherapistSchedule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

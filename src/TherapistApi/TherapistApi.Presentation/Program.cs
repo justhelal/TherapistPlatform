@@ -4,8 +4,8 @@ using TherapistApi.Application.Services;
 using TherapistApi.Domain.Interfaces;
 using TherapistApi.Infrastructure.Data;
 using TherapistApi.Infrastructure.Repositories;
-using MassTransit;
 using TherapistApi.Infrastructure.Messaging;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,37 +18,31 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<TherapistDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add MassTransit with RabbitMQ
+// Add MassTransit with RabbitMQ - simplified configuration
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<PatientCreatedConsumer>();
-    x.AddConsumer<AppointmentScheduledConsumer>();
+    x.AddConsumer<AppointmentCreatedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-        cfg.Host(rabbitMqConfig["Host"], h =>
+        cfg.Host("localhost", h =>
         {
-            h.Username(rabbitMqConfig["Username"]!);
-            h.Password(rabbitMqConfig["Password"]!);
+            h.Username("guest");
+            h.Password("guest");
         });
 
-        cfg.ReceiveEndpoint("therapist-patient-events", e =>
+        // Configure specific exchange and queue for appointments
+        cfg.ReceiveEndpoint("therapist-appointments-queue", e =>
         {
-            e.ConfigureConsumer<PatientCreatedConsumer>(context);
+            e.ConfigureConsumer<AppointmentCreatedConsumer>(context);
+            e.Bind("appointments.exchange");
         });
-
-        cfg.ReceiveEndpoint("therapist-appointment-events", e =>
-        {
-            e.ConfigureConsumer<AppointmentScheduledConsumer>(context);
-        });
-
-        cfg.ConfigureEndpoints(context);
     });
 });
 
 // Add repositories
 builder.Services.AddScoped<ITherapistRepository, TherapistRepository>();
+builder.Services.AddScoped<ITherapistScheduleRepository, TherapistScheduleRepository>();
 
 // Add services
 builder.Services.AddScoped<ITherapistService, TherapistService>();

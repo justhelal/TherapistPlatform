@@ -18,37 +18,30 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<PatientDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Add MassTransit with RabbitMQ
+// Add MassTransit with RabbitMQ - simplified configuration
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<TherapistCreatedConsumer>();
-    x.AddConsumer<TherapistUpdatedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var rabbitMqConfig = builder.Configuration.GetSection("RabbitMQ");
-        cfg.Host(rabbitMqConfig["Host"], h =>
+        cfg.Host("localhost", h =>
         {
-            h.Username(rabbitMqConfig["Username"]!);
-            h.Password(rabbitMqConfig["Password"]!);
+            h.Username("guest");
+            h.Password("guest");
         });
 
         cfg.ReceiveEndpoint("patient-therapist-events", e =>
         {
             e.ConfigureConsumer<TherapistCreatedConsumer>(context);
-            e.ConfigureConsumer<TherapistUpdatedConsumer>(context);
         });
-
-        cfg.ConfigureEndpoints(context);
     });
 });
 
 // Add repositories
-builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 
 // Add services
-builder.Services.AddScoped<IPatientService, PatientService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 
 // Add CORS

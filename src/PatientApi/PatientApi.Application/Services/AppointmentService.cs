@@ -12,16 +12,13 @@ namespace PatientApi.Application.Services;
 public class AppointmentService : IAppointmentService
 {
     private readonly IAppointmentRepository _appointmentRepository;
-    private readonly IPatientRepository _patientRepository;
     private readonly IPublishEndpoint _publishEndpoint;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
-        IPatientRepository patientRepository,
         IPublishEndpoint publishEndpoint)
     {
         _appointmentRepository = appointmentRepository;
-        _patientRepository = patientRepository;
         _publishEndpoint = publishEndpoint;
     }
 
@@ -29,10 +26,12 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
-            // Verify patient exists
-            var patientExists = await _patientRepository.ExistsAsync(createAppointmentDto.PatientId);
-            if (!patientExists)
-                return ApiResponse<AppointmentDto>.ErrorResult("Patient not found");
+            // Validate patient and therapist IDs exist (simple validation)
+            if (createAppointmentDto.PatientId == Guid.Empty)
+                return ApiResponse<AppointmentDto>.ErrorResult("Invalid patient ID");
+            
+            if (createAppointmentDto.TherapistId == Guid.Empty)
+                return ApiResponse<AppointmentDto>.ErrorResult("Invalid therapist ID");
 
             // Create appointment entity
             var appointment = new Appointment
@@ -49,20 +48,19 @@ public class AppointmentService : IAppointmentService
                 UpdatedAt = DateTime.UtcNow
             };
 
+            // Save appointment in Patient DB
             var createdAppointment = await _appointmentRepository.AddAsync(appointment);
 
-            // Publish AppointmentScheduledEvent
-            await _publishEndpoint.Publish(new AppointmentScheduledEvent
+            // Publish AppointmentCreated event to RabbitMQ
+            await _publishEndpoint.Publish(new AppointmentCreatedEvent
             {
                 AppointmentId = createdAppointment.Id,
                 PatientId = createdAppointment.PatientId,
                 TherapistId = createdAppointment.TherapistId,
-                AppointmentDateTime = createdAppointment.AppointmentDate,
-                Notes = createdAppointment.Notes,
-                CreatedAt = createdAppointment.CreatedAt
+                DateTime = createdAppointment.AppointmentDate
             });
 
-            return ApiResponse<AppointmentDto>.SuccessResult(MapToDto(createdAppointment), "Appointment scheduled successfully");
+            return ApiResponse<AppointmentDto>.SuccessResult(MapToDto(createdAppointment), "Appointment created successfully");
         }
         catch (Exception ex)
         {
@@ -70,93 +68,7 @@ public class AppointmentService : IAppointmentService
         }
     }
 
-    public async Task<ApiResponse<AppointmentDto>> UpdateAppointmentAsync(Guid id, CreateAppointmentDto updateAppointmentDto)
-    {
-        try
-        {
-            var existingAppointment = await _appointmentRepository.GetByIdAsync(id);
-            if (existingAppointment == null)
-                return ApiResponse<AppointmentDto>.ErrorResult("Appointment not found");
-
-            // Update properties
-            existingAppointment.PatientId = updateAppointmentDto.PatientId;
-            existingAppointment.TherapistId = updateAppointmentDto.TherapistId;
-            existingAppointment.AppointmentDate = updateAppointmentDto.AppointmentDate;
-            existingAppointment.Duration = updateAppointmentDto.Duration;
-            existingAppointment.Notes = updateAppointmentDto.Notes;
-            existingAppointment.Cost = updateAppointmentDto.Cost;
-            existingAppointment.UpdatedAt = DateTime.UtcNow;
-
-            var updatedAppointment = await _appointmentRepository.UpdateAsync(existingAppointment);
-
-            return ApiResponse<AppointmentDto>.SuccessResult(MapToDto(updatedAppointment), "Appointment updated successfully");
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<AppointmentDto>.ErrorResult($"Error updating appointment: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<bool>> CancelAppointmentAsync(Guid id, string cancellationReason)
-    {
-        try
-        {
-            var existingAppointment = await _appointmentRepository.GetByIdAsync(id);
-            if (existingAppointment == null)
-                return ApiResponse<bool>.ErrorResult("Appointment not found");
-
-            existingAppointment.Status = AppointmentStatus.Cancelled;
-            existingAppointment.SessionNotes = $"Cancelled: {cancellationReason}";
-            existingAppointment.UpdatedAt = DateTime.UtcNow;
-
-            await _appointmentRepository.UpdateAsync(existingAppointment);
-
-            // Publish AppointmentCancelledEvent
-            await _publishEndpoint.Publish(new AppointmentCancelledEvent
-            {
-                AppointmentId = existingAppointment.Id,
-                PatientId = existingAppointment.PatientId,
-                TherapistId = existingAppointment.TherapistId,
-                CancellationReason = cancellationReason,
-                CancelledAt = existingAppointment.UpdatedAt ?? DateTime.UtcNow
-            });
-
-            return ApiResponse<bool>.SuccessResult(true, "Appointment cancelled successfully");
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<bool>.ErrorResult($"Error cancelling appointment: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<IEnumerable<AppointmentDto>>> GetAppointmentsByPatientIdAsync(Guid patientId)
-    {
-        try
-        {
-            var appointments = await _appointmentRepository.GetByPatientIdAsync(patientId);
-            var appointmentDtos = appointments.Select(MapToDto);
-            return ApiResponse<IEnumerable<AppointmentDto>>.SuccessResult(appointmentDtos);
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<IEnumerable<AppointmentDto>>.ErrorResult($"Error retrieving appointments: {ex.Message}");
-        }
-    }
-
-    public async Task<ApiResponse<IEnumerable<AppointmentDto>>> GetUpcomingAppointmentsAsync()
-    {
-        try
-        {
-            var appointments = await _appointmentRepository.GetUpcomingAppointmentsAsync();
-            var appointmentDtos = appointments.Select(MapToDto);
-            return ApiResponse<IEnumerable<AppointmentDto>>.SuccessResult(appointmentDtos);
-        }
-        catch (Exception ex)
-        {
-            return ApiResponse<IEnumerable<AppointmentDto>>.ErrorResult($"Error retrieving upcoming appointments: {ex.Message}");
-        }
-    }
-
+    // Keep only the mapping method for the simplified flow
     private static AppointmentDto MapToDto(Appointment appointment)
     {
         return new AppointmentDto
@@ -168,10 +80,7 @@ public class AppointmentService : IAppointmentService
             Duration = appointment.Duration,
             Status = appointment.Status,
             Notes = appointment.Notes,
-            SessionNotes = appointment.SessionNotes,
-            Cost = appointment.Cost,
-            IsPaid = appointment.IsPaid,
-            PatientName = appointment.Patient != null ? $"{appointment.Patient.FirstName} {appointment.Patient.LastName}" : string.Empty
+            Cost = appointment.Cost
         };
     }
 }

@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using TherapistApi.Domain.Entities;
 
 namespace TherapistApi.Infrastructure.Data;
@@ -11,6 +13,7 @@ public class TherapistDbContext : DbContext
 
     public DbSet<Therapist> Therapists { get; set; }
     public DbSet<Availability> Availabilities { get; set; }
+    public DbSet<TherapistSchedule> TherapistSchedules { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,5 +48,42 @@ public class TherapistDbContext : DbContext
                   .HasForeignKey(e => e.TherapistId)
                   .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Configure TherapistSchedule entity
+        modelBuilder.Entity<TherapistSchedule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TherapistId).IsRequired();
+            entity.Property(e => e.AppointmentId).IsRequired();
+            entity.Property(e => e.AppointmentDateTime).IsRequired();
+            entity.Property(e => e.IsBlocked).IsRequired();
+            entity.Property(e => e.Notes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Therapist)
+                  .WithMany()
+                  .HasForeignKey(e => e.TherapistId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+}
+
+public class TherapistDbContextFactory : IDesignTimeDbContextFactory<TherapistDbContext>
+{
+    public TherapistDbContext CreateDbContext(string[] args)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<TherapistDbContext>();
+        
+        // Build configuration
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../TherapistApi.Presentation"))
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            .Build();
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        
+        optionsBuilder.UseSqlServer(connectionString);
+
+        return new TherapistDbContext(optionsBuilder.Options);
     }
 }

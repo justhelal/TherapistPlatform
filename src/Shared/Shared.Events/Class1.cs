@@ -33,15 +33,13 @@ public record PatientCreatedEvent
     public DateTime CreatedAt { get; init; }
 }
 
-// Event published when an appointment is scheduled
-public record AppointmentScheduledEvent
+// Event published when an appointment is created (simplified)
+public record AppointmentCreatedEvent
 {
     public Guid AppointmentId { get; init; }
     public Guid PatientId { get; init; }
     public Guid TherapistId { get; init; }
-    public DateTime AppointmentDateTime { get; init; }
-    public string Notes { get; init; } = string.Empty;
-    public DateTime CreatedAt { get; init; }
+    public DateTime DateTime { get; init; }
 }
 
 // Event published when an appointment is cancelled
